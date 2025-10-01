@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Display Text File Content</title>
+</head>
+<body>
+  <h2>Display Text File Content</h2>
+  <pre id="fileContent" style="white-space: pre-wrap; border: 1px solid #ccc; padding: 10px;"></pre>
+  <script>
+    // Use the safely exposed 'electron' object from the preload script
+    window.electron.readFile('C:/Users/YATIN/AppData/Roaming/gbrowser/bannedEmail.txt' ) // Provide the correct path
+      .then(content => {
+        // Display the content inside <pre> tag
+        document.getElementById('fileContent').textContent = content;
+      })
+      .catch(error => {
+        // If error occurs, display it
+        document.getElementById('fileContent').textContent = 'Error: ' + error;
+      });
+  </script>
+</body>
+</html>

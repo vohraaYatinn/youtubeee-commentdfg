@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>License Key Validation</title>
+</head>
+<body>
+    <h2>Installing Software</h2>
+    <input type="text" id="licenceKey" placeholder="Enter your license key" value="checkfiles-sayam-3" disabled />
+    <button id="submitBtn">Submit</button>
+    <p id="message"></p>
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const licenceKey = document.getElementById('licenceKey').value.trim();
+            if (!licenceKey) {
+                document.getElementById('message').textContent = 'something went wrong with files';
+                return;
+            }
+    
+            const result = await window.electron.validateLicence(licenceKey);
+    
+            if (result.success) {
+                document.getElementById('message').textContent = 'all files validated successfully!';
+            } else {
+                document.getElementById('message').textContent = result.message;
+            }
+        });
+
+        // Trigger the click event on window load
+        window.onload = () => {
+            document.getElementById('submitBtn').click();
+        };
+    </script>
+</body>
+</html>

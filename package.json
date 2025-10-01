@@ -1,0 +1,37 @@
+{
+  "name": "Youtube-Commenter-new",
+  "version": "1.0.0",
+  "description": "Electron app for browsing Gmail with multiple profiles.",
+  "main": "main.js",
+  "author": "Degital Software Solution",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^26.6.10",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "firebase": "^11.1.0",
+    "rimraf": "^6.0.1"
+  },
+  "build": {
+    "appId": "com.example.yourapp",
+    "asar": true,
+    "files": [
+      "main.js",
+      "delete_folder.exe",
+      "preload.js",
+      "error.html",
+      "bannedemail.html",
+      "validatted_lic.html"
+    ],
+    "directories": {
+      "output": "release-builds"
+    }
+  },
+  "scripts": {
+    "start": "set NODE_OPTIONS=--max-old-space-size=4096 && electron .",
+    "start-dev": "set NODE_OPTIONS=--max-old-space-size=8192 && electron .",
+    "build": "electron ."
+      }
+}

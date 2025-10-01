@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Comment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    input, textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Post Comment on YouTube Video</h2>
+
+  <label for="youtube-url">YouTube URL</label>
+  <input type="text" id="youtube-url" placeholder="Paste YouTube video URL" />
+
+  <label for="comment">Your Comment</label>
+  <textarea id="comment" placeholder="Type your comment here"></textarea>
+
+  <button id="submit-comment">Post Comment</button>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    document.getElementById('submit-comment').addEventListener('click', () => {
+      const youtubeUrl = document.getElementById('youtube-url').value;
+      const comment = document.getElementById('comment').value;
+
+      if (youtubeUrl && comment) {
+        ipcRenderer.invoke('submit-comment', youtubeUrl, comment);
+        alert('Comment submitted!');
+      } else {
+        alert('Please provide both a YouTube URL and a comment!');
+      }
+    });
+  </script>
+
+</body>
+</html>
