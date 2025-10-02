@@ -23,7 +23,7 @@ const bannedEmailFilePath = path.join(app.getPath('userData'), 'bannedEmail.txt'
 const default_path = app.getPath('userData')
 let profiles = new Set([]);
 let profilesEmail = {} // Store all profile names
-const filePathlic =  path.join(app.getPath('userData'),  'licdet.json');
+// License verification removed
 console.log(profilesFilePath)
 console.log(profilesEmail)
 
@@ -1086,158 +1086,32 @@ logoutrangePopup.once('ready-to-show', () => {
 }
 
 
-async function checkAndCreateFile() {
+// License verification completely removed
+// License validation function removed
 
- 
-  if (!fs.existsSync(filePathlic)) {
-      const data = {
-          uuid: crypto.randomUUID(),
-          app_name: "youtube_commenter",
-          licence_key: "checkfiles-sayam-3"
-      };
-
-      fs.writeFileSync(filePathlic, JSON.stringify(data, null, 2), 'utf-8');
-     return true; // Always return true to allow app to run
-  } else {
-
-    try {
-     
-      const fileData = JSON.parse(fs.readFileSync(filePathlic, 'utf-8'));
-      console.log(fileData.licence_key,'skldjfdklsfjdklfmdklf')
-      if(!fileData.licence_key){
-        // Set default license key if none exists
-        fileData.licence_key = "checkfiles-sayam-3";
-        fs.writeFileSync(filePathlic, JSON.stringify(fileData, null, 2), 'utf-8');
-        return true;
-      }else
-        {
-          console.log("License key found")
-        
-        if (true) { // Always return true for now
-            return  true ;
-        } else {
-         
-            return false;
-        }}
-    } catch (error) {
-      console.log("Error reading license file, creating new one");
-      const data = {
-          uuid: crypto.randomUUID(),
-          app_name: "youtube_commenter",
-          licence_key: "checkfiles-sayam-3"
-      };
-      fs.writeFileSync(filePathlic, JSON.stringify(data, null, 2), 'utf-8');
-      return true;
-    }
-      
-  }
-}
-let validate_window
-async function lic_validation() {
-  validate_window = new BrowserWindow({
-      width: 1400,
-      height: 1300,
-      webPreferences: {
-        nodeIntegration: false, // Ensure security
-        contextIsolation: true,
-        preload: path.join(__dirname, 'preload.js') // Allow communication between renderer and main process
-      }
-  });
-
-  validate_window.loadFile('validatted_lic.html');
-  //validate_window.webContents.openDevTools(); 
-  validate_window.on('closed', () => {
-    validate_window = null;
-  });
-
-  return 'waiting'
-  
-}
-
-// Event listener for license key submission
-ipcMain.handle('validate-licence', async (event, licenceKey) => {
-  console.log('from api')
-  try {
-    const fileData = JSON.parse(fs.readFileSync(filePathlic, 'utf-8'));
-    console.log("sdsd")
-      if (true) {
-        console.log("Abcd")
-         // const filePath = checkAndCreateFile();
-          const fileData = JSON.parse(fs.readFileSync(filePathlic, 'utf-8'));
-          fileData.licence_key = licenceKey;
-          fs.writeFileSync(filePathlic, JSON.stringify(fileData, null, 2), 'utf-8');
-          validate_window.close()
-          return { success: true ,message: 'instllation succesfull please re-run the app.'};
-      } else {
-          return { success: false, message: 'Invalid files details. Please try again.' };
-      }
-  } catch (error) {
-    console.log(str(error))
-      return { success: false, message: 'Error validating files details. Please try again later.' };
-  }
-});
+// License validation IPC handler removed
 
 app.on('ready', async  () => {
- const validation = await checkAndCreateFile()
+  console.log("Starting YouTube Commenter...")
+  console.log("Profiles file path:", profilesFilePath)
+
+  await  loadProfiles();
+  await checkAndRemoveProfiles();
+  saveProfiles();
+  await  findMissingProfiles();
+  await sortProfiles()
+  
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [''], // Override CSP
+      },
+    });
+  })
  
-  if (validation===true){
-    console.log("accdop", profilesFilePath)
-
-    console.log('6')
-    await  loadProfiles();
-    await checkAndRemoveProfiles();
-    saveProfiles();
-    await  findMissingProfiles();
-    await sortProfiles()
-    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-      callback({
-        responseHeaders: {
-          ...details.responseHeaders,
-          'Content-Security-Policy': [''], // Override CSP
-        },
-      });
-    })
-   
-    openCommentPopup(); 
-    updateMenu(); 
-  }
-  else if(validation ===false) {
-    
-    errorWindow = new BrowserWindow({
-      width: 1300,
-      height: 1550,
-      resizable: false,
-      modal: true,
-      parent: mainWindow, // Make it modal to the main window
-      webPreferences: {
-          nodeIntegration: true,
-          contextIsolation: false,
-      }
-  });
-
-  errorWindow.loadFile('error.html');
-  }
-  else {
-    // If validation is 'waiting' or any other state, still show the main app
-    console.log("License validation in progress, showing main app");
-    await  loadProfiles();
-    await checkAndRemoveProfiles();
-    saveProfiles();
-    await  findMissingProfiles();
-    await sortProfiles()
-    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-      callback({
-        responseHeaders: {
-          ...details.responseHeaders,
-          'Content-Security-Policy': [''], // Override CSP
-        },
-      });
-    })
-   
-    openCommentPopup(); 
-    updateMenu(); 
-  }
-
+  openCommentPopup(); 
+  updateMenu(); 
 });
 
 app.on('window-all-closed', () => {

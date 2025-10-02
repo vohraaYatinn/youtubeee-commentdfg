@@ -18,6 +18,6 @@ contextBridge.exposeInMainWorld('electron', {
 readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
 deleteFolder: (folderPath) => ipcRenderer.send('delete-folder', folderPath),
 onFolderDeletionStatus: (callback) => ipcRenderer.on('folder-deletion-status', (event, data) => callback(data)),
-validateLicence: (licenceKey) => ipcRenderer.invoke('validate-licence', licenceKey),
+// License validation removed
 searchProfiles: (query) => ipcRenderer.invoke('search-profiles', query),
 });
