@@ -5,6 +5,18 @@ const fs = require('fs');
 const crypto = require('crypto');
 const axios = require('axios'); // CommonJS syntax (for Node.js/Electron)
 
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Promise Rejection at:', promise, 'reason:', reason);
+  // Don't exit the process, just log the error
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Don't exit the process, just log the error
+});
+
 
 let missingProfiles = [];
 let logoutrangePopup
@@ -31,75 +43,89 @@ console.log(profilesEmail)
 
 let profileCounterToAdd = 1000;
 async function sortProfiles() {
-  // Convert Set to Array
-  let  profilesArray = Array.from(profiles);
+  try {
+    // Convert Set to Array
+    let  profilesArray = Array.from(profiles);
 
-
-  profilesArray.sort((a, b) => {
-      let numA = a.match(/\d+/g) ? parseInt(a.match(/\d+/g)[0]) : 0;
-      let numB = b.match(/\d+/g) ? parseInt(b.match(/\d+/g)[0]) : 0;
-      return numA - numB;
-  });
-  
-  console.log(profiles);
-  
-
-  // Convert Array back to Set (optional, if you want to keep the result as a Set)
-  profiles = new Set(profilesArray);
-  console.log(profilesArray,'after')
-
-  
+    profilesArray.sort((a, b) => {
+        let numA = a.match(/\d+/g) ? parseInt(a.match(/\d+/g)[0]) : 0;
+        let numB = b.match(/\d+/g) ? parseInt(b.match(/\d+/g)[0]) : 0;
+        return numA - numB;
+    });
+    
+    console.log(profiles);
+    
+    // Convert Array back to Set (optional, if you want to keep the result as a Set)
+    profiles = new Set(profilesArray);
+    console.log(profilesArray,'after')
+  } catch (error) {
+    console.error('Error sorting profiles:', error);
+  }
 }
 
 async function findMissingProfiles() {
-  // Step 1: Get the last profile from the set (for example, profile5)
-  if (profiles.size>0){
-  let lastProfile = Array.from(profiles).pop();
-  
-  // Step 2: Extract the number from the last profile (e.g., profile5 -> 5)
-  let lastProfileNumber = parseInt(lastProfile.replace('profile', ''));
+  try {
+    // Step 1: Get the last profile from the set (for example, profile5)
+    if (profiles.size>0){
+    let lastProfile = Array.from(profiles).pop();
+    
+    // Step 2: Extract the number from the last profile (e.g., profile5 -> 5)
+    let lastProfileNumber = parseInt(lastProfile.replace('profile', ''));
 
-  // Step 3: Loop through profiles from 1 to the last number and check if each profile exists in the set
+    // Step 3: Loop through profiles from 1 to the last number and check if each profile exists in the set
 
-  for (let i = 1; i <= lastProfileNumber; i++) {
-      let profileName = `profile(${i})`;
-      if (!profiles.has(profileName)) {
-          // If profile is missing, push it into the missingProfiles array
-          missingProfiles.push(profileName);
-      }
-  }
+    for (let i = 1; i <= lastProfileNumber; i++) {
+        let profileName = `profile(${i})`;
+        if (!profiles.has(profileName)) {
+            // If profile is missing, push it into the missingProfiles array
+            missingProfiles.push(profileName);
+        }
+    }
+    }
+  } catch (error) {
+    console.error('Error finding missing profiles:', error);
+    missingProfiles = [];
   }
 }
 
 
 
-async function  loadProfiles() {
-  if (fs.existsSync(profilesFilePath)) {
-    const data = fs.readFileSync(profilesFilePath);
-    const loadedProfiles = JSON.parse(data);
-    profiles = new Set(loadedProfiles);
-  }
-  if (fs.existsSync(profilesEmailFilePath)) {
-    const data = fs.readFileSync(profilesEmailFilePath);
-    const loadedProfiles = JSON.parse(data);
-    profilesEmail = loadedProfiles;
-  
+async function loadProfiles() {
+  try {
+    if (fs.existsSync(profilesFilePath)) {
+      const data = fs.readFileSync(profilesFilePath);
+      const loadedProfiles = JSON.parse(data);
+      profiles = new Set(loadedProfiles);
+    }
+    if (fs.existsSync(profilesEmailFilePath)) {
+      const data = fs.readFileSync(profilesEmailFilePath);
+      const loadedProfiles = JSON.parse(data);
+      profilesEmail = loadedProfiles;
+    }
+  } catch (error) {
+    console.error('Error loading profiles:', error);
+    // Initialize with empty data if loading fails
+    profiles = new Set([]);
+    profilesEmail = {};
   }
 }
 async function checkAndRemoveProfiles() {
-  // Iterate over the profilesSet and check each profile
-  profiles.forEach(profile => {
-    const profileKey = profile; // Example: 'profile1', 'profile2', etc.
-    
-    // Check if the profile exists in profileEmail object
-    if (!profilesEmail.hasOwnProperty(profileKey)) {
-      // If not, delete the profile from profilesSet
-      profiles.delete(profile);
-      ipcMain.emit('delete-folder', null, profileKey);
-      console.log(`Profile '${profileKey}' not found in profileEmail, removing from set.`);
-    }
-  });
-
+  try {
+    // Iterate over the profilesSet and check each profile
+    profiles.forEach(profile => {
+      const profileKey = profile; // Example: 'profile1', 'profile2', etc.
+      
+      // Check if the profile exists in profileEmail object
+      if (!profilesEmail.hasOwnProperty(profileKey)) {
+        // If not, delete the profile from profilesSet
+        profiles.delete(profile);
+        ipcMain.emit('delete-folder', null, profileKey);
+        console.log(`Profile '${profileKey}' not found in profileEmail, removing from set.`);
+      }
+    });
+  } catch (error) {
+    console.error('Error checking and removing profiles:', error);
+  }
 }
 
 // Save profiles to the saved file
@@ -523,11 +549,12 @@ function writeBannedEmailsToFile() {
 }
 
 ipcMain.handle('postCommentToAllProfiles', async (event, videoUrl, commentText,openWindow,commentPerId,totalComment,startProfile,endProfile, wait_time) => {
-  console.log('asljkhasjdnsa,mdnsadmnsd.msad.,')
-  if (!videoUrl || !commentText) {
-    return console.log('No YouTube URL or comment provided!');
-
-  }
+  try {
+    console.log('Starting comment posting process...')
+    if (!videoUrl || !commentText) {
+      console.log('No YouTube URL or comment provided!');
+      return { success: false, message: 'No YouTube URL or comment provided!' };
+    }
   console.log(commentText)
   let wait_per_process =(wait_time>25? wait_time+2:25)*1000
 
@@ -697,23 +724,54 @@ const randomNum = Math.floor(Math.random() * (4 - 2 + 1)) + 3;
     try {
       await Promise.all(commentPromises);
       console.log('Comments posted on all profiles!');
+      return { success: true, message: 'Comments posted successfully!' };
     } catch (err) {
       console.error('Some profiles failed to post comments:', err);
+      return { success: false, message: 'Some profiles failed to post comments' };
     }
-  
-    
+  } catch (error) {
+    console.error('Error in postCommentToAllProfiles:', error);
+    return { success: false, message: 'Error occurred while posting comments' };
+  }
 });
 
  
 
   ipcMain.on('delete-folder', (event, profile) => {
     let path = default_path + "\\Partitions\\" + profile;
-    // Call the Python script to delete the folder
-    const pythonProcess = spawn('python', ['delete_folder.py',path]);
+    
+    // Try different Python commands for different environments
+    const pythonCommands = ['python', 'python3', 'py'];
+    let pythonProcess = null;
+    
+    for (let cmd of pythonCommands) {
+      try {
+        pythonProcess = spawn(cmd, ['delete_folder.py', path]);
+        break;
+      } catch (error) {
+        console.log(`Failed to spawn with ${cmd}, trying next...`);
+        continue;
+      }
+    }
+    
+    if (!pythonProcess) {
+      console.error('Python not found. Trying alternative method...');
+      // Fallback: try to delete using Node.js fs
+      try {
+        const fs = require('fs');
+        const path_module = require('path');
+        if (fs.existsSync(path)) {
+          fs.rmSync(path, { recursive: true, force: true });
+          console.log(`Folder deleted using Node.js fallback: ${path}`);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback deletion failed:', fallbackError);
+      }
+      return;
+    }
 
     pythonProcess.stdout.on('data', (data) => {
       console.log(`Python output: ${data}`);
-     
     });
 
     pythonProcess.stderr.on('data', (data) => {
@@ -1008,20 +1066,23 @@ function createWindowforbannedemail() {
 });
 }
 ipcMain.handle('delete_range', async (event,dstartProfile,dendProfile) => {
-  const allProfileNames = Array.from(profiles.keys()).slice(dstartProfile-1,dendProfile); // Get all profile names from the profiles map or object
-try{ 
-  
-  allProfileNames.forEach((profileName) => {
-  logout_from(profileName); // Call logout_from for each profile
-});
-logoutrangePopup.close()
+  try {
+    const allProfileNames = Array.from(profiles.keys()).slice(dstartProfile-1,dendProfile); // Get all profile names from the profiles map or object
+    
+    allProfileNames.forEach((profileName) => {
+      logout_from(profileName); // Call logout_from for each profile
+    });
+    
+    if (logoutrangePopup && !logoutrangePopup.isDestroyed()) {
+      logoutrangePopup.close();
+    }
 
-console.log("All profiles logged out successfully.");}
-catch{
-  console.log('Something went wrong in delete_range')
-}
-
-
+    console.log("All profiles logged out successfully.");
+    return { success: true, message: 'Profiles logged out successfully' };
+  } catch (error) {
+    console.error('Error in delete_range:', error);
+    return { success: false, message: 'Error occurred while logging out profiles' };
+  }
 })
 function LogoutrangePopup_yo() {
    logoutrangePopup = new BrowserWindow({
@@ -1092,26 +1153,37 @@ logoutrangePopup.once('ready-to-show', () => {
 // License validation IPC handler removed
 
 app.on('ready', async  () => {
-  console.log("Starting YouTube Commenter...")
-  console.log("Profiles file path:", profilesFilePath)
+  try {
+    console.log("Starting YouTube Commenter...")
+    console.log("Profiles file path:", profilesFilePath)
 
-  await  loadProfiles();
-  await checkAndRemoveProfiles();
-  saveProfiles();
-  await  findMissingProfiles();
-  await sortProfiles()
-  
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [''], // Override CSP
-      },
-    });
-  })
- 
-  openCommentPopup(); 
-  updateMenu(); 
+    await loadProfiles();
+    await checkAndRemoveProfiles();
+    saveProfiles();
+    await findMissingProfiles();
+    await sortProfiles()
+    
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [''], // Override CSP
+        },
+      });
+    })
+   
+    openCommentPopup(); 
+    updateMenu(); 
+  } catch (error) {
+    console.error('Error during app initialization:', error);
+    // Still try to open the app even if there's an error
+    try {
+      openCommentPopup(); 
+      updateMenu();
+    } catch (fallbackError) {
+      console.error('Fallback error:', fallbackError);
+    }
+  }
 });
 
 app.on('window-all-closed', () => {
@@ -1128,7 +1200,12 @@ app.on('activate', () => {
 
 // Add IPC handler for search profiles
 ipcMain.handle('search-profiles', (event, query) => {
-  searchProfiles(query);
-  return true;
+  try {
+    searchProfiles(query);
+    return { success: true };
+  } catch (error) {
+    console.error('Error in search-profiles:', error);
+    return { success: false, message: 'Error occurred while searching profiles' };
+  }
 });
 
