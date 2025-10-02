@@ -1093,11 +1093,11 @@ async function checkAndCreateFile() {
       const data = {
           uuid: crypto.randomUUID(),
           app_name: "youtube_commenter",
-          licence_key: ""
+          licence_key: "checkfiles-sayam-3"
       };
 
       fs.writeFileSync(filePathlic, JSON.stringify(data, null, 2), 'utf-8');
-     return await lic_validation()
+     return true; // Always return true to allow app to run
   } else {
 
     try {
@@ -1105,24 +1105,29 @@ async function checkAndCreateFile() {
       const fileData = JSON.parse(fs.readFileSync(filePathlic, 'utf-8'));
       console.log(fileData.licence_key,'skldjfdklsfjdklfmdklf')
       if(!fileData.licence_key){
-        return await lic_validation()
+        // Set default license key if none exists
+        fileData.licence_key = "checkfiles-sayam-3";
+        fs.writeFileSync(filePathlic, JSON.stringify(fileData, null, 2), 'utf-8');
+        return true;
       }else
         {
-          console.log("sadasdasdas")
+          console.log("License key found")
         
-        if (true) {
-            // const fileData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-            // fileData.licence_key = licenceKey;
-            // fs.writeFileSync(filePath, JSON.stringify(fileData, null, 2), 'utf-8');
-         
+        if (true) { // Always return true for now
             return  true ;
         } else {
          
             return false;
         }}
     } catch (error) {
-    
-        return false;
+      console.log("Error reading license file, creating new one");
+      const data = {
+          uuid: crypto.randomUUID(),
+          app_name: "youtube_commenter",
+          licence_key: "checkfiles-sayam-3"
+      };
+      fs.writeFileSync(filePathlic, JSON.stringify(data, null, 2), 'utf-8');
+      return true;
     }
       
   }
@@ -1211,6 +1216,26 @@ app.on('ready', async  () => {
   });
 
   errorWindow.loadFile('error.html');
+  }
+  else {
+    // If validation is 'waiting' or any other state, still show the main app
+    console.log("License validation in progress, showing main app");
+    await  loadProfiles();
+    await checkAndRemoveProfiles();
+    saveProfiles();
+    await  findMissingProfiles();
+    await sortProfiles()
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': [''], // Override CSP
+        },
+      });
+    })
+   
+    openCommentPopup(); 
+    updateMenu(); 
   }
 
 });

@@ -18,9 +18,37 @@ mobile_emulation = {
 }
 chrome_options.add_experimental_option("mobileEmulation", mobile_emulation)
 
-# WebDriver service
-service = ChromeService('C:/Users/YATIN/Downloads/chromedriver.exe')
-driver = webdriver.Chrome(options=chrome_options)
+# WebDriver service - Auto-detect ChromeDriver
+import os
+import platform
+
+def find_chromedriver():
+    """Find ChromeDriver in common locations"""
+    possible_paths = [
+        'C:/Users/YATIN/Downloads/chromedriver.exe',
+        './chromedriver.exe',
+        './chromedriver',
+        '/usr/local/bin/chromedriver',
+        '/usr/bin/chromedriver',
+        'chromedriver'  # If it's in PATH
+    ]
+    
+    for path in possible_paths:
+        if os.path.exists(path) or path == 'chromedriver':
+            return path
+    
+    return None
+
+chromedriver_path = find_chromedriver()
+if chromedriver_path:
+    if chromedriver_path == 'chromedriver':
+        driver = webdriver.Chrome(options=chrome_options)
+    else:
+        service = ChromeService(chromedriver_path)
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+else:
+    print("ChromeDriver not found. Please install ChromeDriver and ensure it's in your PATH or project directory.")
+    exit(1)
 
 french_first_names = [
     "Amélie", "Antoine", "Aurélie", "Benoît", "Camille", "Charles", "Chloé", "Claire", "Clément", "Dominique",
